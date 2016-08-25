@@ -27,6 +27,9 @@ endif
 if !exists("g:tabspace_divider")
     let g:tabspace_divider = "|"
 endif
+if !exists("g:tabspace_excluded_buffer_names")
+    let g:tabspace_excluded_buffer_names = ['NERD_Tree']
+endif
 
 " Map of tab titles
 let s:tabspaceData = {}
@@ -66,6 +69,32 @@ function! Tabspace()
 
   let tablineText .= '%#' . g:tabspace_fill_highlight . '#'
   return tablineText
+endfunction
+
+function! OpenTabspaceBuffers()
+    call TabspaceBuffers()
+    copen
+endfunction
+
+function! TabspaceBuffers()
+    let buflist = s:tabspaceData[t:tabspaceKey]['buffers']
+    let quickfix = []
+    for buf in buflist
+        let bufname = bufname(buf)
+        let addBuffer = 1
+        for str in g:tabspace_excluded_buffer_names
+            if bufname =~ str
+                addBuffer = 0
+            endif
+        endfor
+        if addBuffer
+            call add(quickfix, {
+                \ 'bufnr' : buf,
+                \ 'filename': bufname
+            \ })
+        endif
+    endfor
+    call setqflist(quickfix)
 endfunction
 
 function GetTabHighlight(tab)
@@ -109,7 +138,6 @@ function GetBufferName(tabNumber)
     return bufname(bufferNumber)
 endfunction
 
-
 function! RefreshTabspaces()
     set tabline=%!Tabspace()
 endfunction
@@ -134,6 +162,18 @@ endfunction
 function! TabspaceEnter()
     call InitializeTabspace()
     call RefreshTabspaceWorkingDir()
+	call TabspaceBuffers()
+endfunction
+
+function! TabspaceBufAdd(buf)
+    call add(s:tabspaceData[t:tabspaceKey]['buffers'], a:buf)
+endfunction
+
+function! TabspaceBufDelete(buf)
+    let idx = index(s:tabspaceData[t:tabspaceKey]['buffers'], a:buf)
+    if idx >= 0
+        call remove(s:tabspaceData[t:tabspaceKey]['buffers'], idx)
+    endif
 endfunction
 
 function! InitializeTabspace()
@@ -144,7 +184,8 @@ function! InitializeTabspace()
             \ 'cwd' : getcwd(),
             \ 'label': '',
             \ 'activeColor' : '',
-            \ 'inactiveColor' : ''
+            \ 'inactiveColor' : '',
+            \ 'buffers' : []
         \}
     endif
     let s:tabspaceMapping[tabpagenr()] = t:tabspaceKey " TODO, this will only handle the current tab.  Need to cleanup other tabs
@@ -169,7 +210,8 @@ function! CreateTabspaces(tabspaceList, use_current)
             \ 'cwd' : cwd,
             \ 'label': label,
             \ 'activeColor': activeColor,
-            \ 'inactiveColor': inactiveColor
+            \ 'inactiveColor': inactiveColor,
+            \ 'buffers' : []
         \}
         let s:tabspaceMapping[tabpagenr()] = t:tabspaceKey
     endfor
@@ -258,12 +300,15 @@ endif
 
 " This is where the magic happens
 au TabEnter * :call TabspaceEnter()
+au BufAdd * :call TabspaceBufAdd(expand('<abuf>'))
+au BufDelete * :call TabspaceBufDelete(expand('<abuf>'))
 
 "Commands
 command! -nargs=1 TabspaceLabel call SetTabspaceLabel(<f-args>)
 command! -nargs=1 TabspaceCWD call TabspaceCWD(<f-args>)
 command! -nargs=1 TabspaceGo call TabspaceGo(<f-args>)
 command! -nargs=* TabspaceColor call SetTabspaceColor(<f-args>)
+command! TabspaceBuffers call OpenTabspaceBuffers()
 
 "Shortcuts
 if g:add_tabspace_mappings
@@ -271,6 +316,7 @@ if g:add_tabspace_mappings
     nnoremap <Leader>tk  :tabprev<CR>
     nnoremap <Leader>tt  :tabnew<CR>
     nnoremap <Leader>td  :call TabspaceDelete()<CR>
+    nnoremap <Leader>tb  :TabspaceBuffers<CR>
     nnoremap <Leader>tr  :TabspaceLabel<Space>
     nnoremap <Leader>tm  :TabspaceGo<Space>
 endif

@@ -9,6 +9,7 @@ This plugin aims to make tabs into more functional workspaces. As of now, the pl
 
 * Change the current working directory on a per tab basis, only when requested.
 * Allows giving tabs custom names and colors
+* Show buffer lists specific to the current tab
 * Allows starting VIM with a pre-configured set of tabs
 * Allows opening pre-configured groups of tabs
 * Integrates with NERDTree to change the working dir
