@@ -16,16 +16,16 @@ if !exists("g:add_tabspace_mappings")
 endif
 
 if !exists("g:tabspace_tab_highlight")
-	let g:tabspace_tab_highlight = "TabspaceGray"
+    let g:tabspace_tab_highlight = "TabspaceGray"
 endif
 if !exists("g:tabspace_selected_tab_highlight")
-	let g:tabspace_selected_tab_highlight = "TabspaceBlack"
+    let g:tabspace_selected_tab_highlight = "TabspaceBlack"
 endif
 if !exists("g:tabspace_fill_highlight")
-	let g:tabspace_fill_highlight = "TabspaceGray"
+    let g:tabspace_fill_highlight = "TabspaceGray"
 endif
 if !exists("g:tabspace_divider")
-	let g:tabspace_divider = "|"
+    let g:tabspace_divider = "|"
 endif
 
 " Map of tab titles
@@ -41,7 +41,7 @@ function! Tabspace()
     let buflist = tabpagebuflist(tab)
     let bufferNumber = buflist[windowNumber - 1]
     let bufname = bufname(bufferNumber)
-	let tabHighlight = GetTabHighlight(tab)
+    let tabHighlight = GetTabHighlight(tab)
 
     let tablineText .= '%' . tab . 'T'
     let tablineText .= '%#' . tabHighlight .  '#'
@@ -58,7 +58,9 @@ function! Tabspace()
     if bufmodified
       let tablineText .= ' *'
     endif
-    let tablineText .= ' ' . g:tabspace_divider
+
+    let tablineText .= ' %#' . g:tabspace_fill_highlight . '#'
+    let tablineText .= g:tabspace_divider
 
   endfor
 
@@ -67,20 +69,20 @@ function! Tabspace()
 endfunction
 
 function GetTabHighlight(tab)
-	let tabspaceKey = s:tabspaceMapping[a:tab]
-	let selected = a:tab == tabpagenr()
-	if (selected)
-		let highlight = s:tabspaceData[tabspaceKey]['activeColor']
-		if empty(highlight)
-			let highlight = g:tabspace_selected_tab_highlight
-		endif
-	else
-		let highlight = s:tabspaceData[tabspaceKey]['inactiveColor']
-		if empty(highlight)
-			let highlight = g:tabspace_tab_highlight
-		endif
-	endif
-	return highlight
+    let tabspaceKey = s:tabspaceMapping[a:tab]
+    let selected = a:tab == tabpagenr()
+    if (selected)
+        let highlight = s:tabspaceData[tabspaceKey]['activeColor']
+        if empty(highlight)
+            let highlight = g:tabspace_selected_tab_highlight
+        endif
+    else
+        let highlight = s:tabspaceData[tabspaceKey]['inactiveColor']
+        if empty(highlight)
+            let highlight = g:tabspace_tab_highlight
+        endif
+    endif
+    return highlight
 endfunction
 
 function GetTabTitle(tab)
@@ -141,8 +143,8 @@ function! InitializeTabspace()
         let s:tabspaceData[t:tabspaceKey] = {
             \ 'cwd' : getcwd(),
             \ 'label': '',
-			\ 'activeColor' : '',
-			\ 'inactiveColor' : ''
+            \ 'activeColor' : '',
+            \ 'inactiveColor' : ''
         \}
     endif
     let s:tabspaceMapping[tabpagenr()] = t:tabspaceKey " TODO, this will only handle the current tab.  Need to cleanup other tabs
@@ -150,13 +152,13 @@ endfunction
 
 function! CreateTabspaces(tabspaceList, use_current)
 
-	let used_current = !a:use_current
+    let used_current = !a:use_current
     for tabspace in a:tabspaceList
-		if used_current == 0
-			let used_current = 1
-		else
-			tabnew
-		endif
+        if used_current == 0
+            let used_current = 1
+        else
+            tabnew
+        endif
         let s:tabspaceIndex = s:tabspaceIndex + 1
         let t:tabspaceKey = s:tabspaceIndex
         let cwd = has_key(tabspace, 'cwd') ? tabspace['cwd'] : getcwd()
@@ -166,74 +168,74 @@ function! CreateTabspaces(tabspaceList, use_current)
         let s:tabspaceData[t:tabspaceKey] = {
             \ 'cwd' : cwd,
             \ 'label': label,
-			\ 'activeColor': activeColor,
-			\ 'inactiveColor': inactiveColor
+            \ 'activeColor': activeColor,
+            \ 'inactiveColor': inactiveColor
         \}
         let s:tabspaceMapping[tabpagenr()] = t:tabspaceKey
     endfor
 endfunction
 
 function! SetTabspaceColor(...)
-	if (a:0 < 1 || a:0 > 2)
-		echoe "Function takes 1 or 2 arguments"
-	endif
-	if (exists("a:1"))
-		let color = ConvertColorToHighlight(a:1)
-		if !empty(color)
-			let s:tabspaceData[t:tabspaceKey]['activeColor'] = color
-			let s:tabspaceData[t:tabspaceKey]['inactiveColor'] = color
-		else
-			echom "Invalid color " . a:1 . ' "' . color . '"'
-		endif
-	endif
-	if (exists("a:2"))
-		let color = ConvertColorToHighlight(a:2)
-		if !empty(color)
-			let s:tabspaceData[t:tabspaceKey]['activeColor'] = color
-		else
-			echom "Invalid color " . a:2
-		endif
-	endif
-	call RefreshTabspaces()
+    if (a:0 < 1 || a:0 > 2)
+        echoe "Function takes 1 or 2 arguments"
+    endif
+    if (exists("a:1"))
+        let color = ConvertColorToHighlight(a:1)
+        if !empty(color)
+            let s:tabspaceData[t:tabspaceKey]['activeColor'] = color
+            let s:tabspaceData[t:tabspaceKey]['inactiveColor'] = color
+        else
+            echom "Invalid color " . a:1 . ' "' . color . '"'
+        endif
+    endif
+    if (exists("a:2"))
+        let color = ConvertColorToHighlight(a:2)
+        if !empty(color)
+            let s:tabspaceData[t:tabspaceKey]['activeColor'] = color
+        else
+            echom "Invalid color " . a:2
+        endif
+    endif
+    call RefreshTabspaces()
 endfunction
 
 function ConvertColorToHighlight(color)
-	if index(['red', 'darkred', 'blue', 'darkblue', 'green', 'darkgreen', 'yellow', 'cyan', 'magenta', 'white', 'black'], tolower(a:color)) >= 0
-		return 'Tabspace' . toupper(strpart(a:color, 0, 1)) . tolower(strpart(a:color, 1))
-	endif
-	return ''
+    if index(['red', 'darkred', 'blue', 'darkblue', 'green', 'darkgreen', 'yellow', 'cyan', 'magenta', 'white', 'black'], tolower(a:color)) >= 0
+        return 'Tabspace' . toupper(strpart(a:color, 0, 1)) . tolower(strpart(a:color, 1))
+    endif
+    return ''
 endfunction
 
 " This function cleans up the data held by a tab along with closing the tab
 " itself.  Use this instead of tabclose to ensure tabspace keeps information
 " up to date
 function! TabspaceDelete()
-	let current = tabpagenr()
-	let tabspaceKey = s:tabspaceMapping[current]
-	while current < len(keys(s:tabspaceMapping))
-		let s:tabspaceMapping[current] = s:tabspaceMapping[current +1]
-		let current = current + 1
-	endwhile
-	unlet s:tabspaceMapping[current]
-	unlet s:tabspaceData[tabspaceKey]
+    let current = tabpagenr()
+    let tabspaceKey = s:tabspaceMapping[current]
+    while current < len(keys(s:tabspaceMapping))
+        let s:tabspaceMapping[current] = s:tabspaceMapping[current +1]
+        let current = current + 1
+    endwhile
+    unlet s:tabspaceMapping[current]
+    unlet s:tabspaceData[tabspaceKey]
 
-	tabclose
+    tabclose
 endfunction
 
 function! TabspaceGo(name)
-	for key in keys(s:tabspaceData)
-		let tabspace = s:tabspaceData[key]
-		if tabspace['label'] == a:name
-			for mappingKey in keys(s:tabspaceMapping)
-				if s:tabspaceMapping[mappingKey] == key
-					let tab = mappingKey
-				endif
-			endfor
-			echom tab
-			exe 'tabnext ' . tab
-			return
-		endif
-	endfor
+    for key in keys(s:tabspaceData)
+        let tabspace = s:tabspaceData[key]
+        if tabspace['label'] == a:name
+            for mappingKey in keys(s:tabspaceMapping)
+                if s:tabspaceMapping[mappingKey] == key
+                    let tab = mappingKey
+                endif
+            endfor
+            echom tab
+            exe 'tabnext ' . tab
+            return
+        endif
+    endfor
 endfunction
 
 if g:add_tabspace_nerdtree_mappings
@@ -245,7 +247,10 @@ if g:add_tabspace_nerdtree_mappings
             return
         else
             exe ':TabspaceCWD ' . current_file.path.str()
+            silent execute 'normal C'
+            silent execute 'normal cd'
         endif
+
     endfunction
 
     nnoremap tg :call TabspaceNerdTreeCWD()<CR>
@@ -267,7 +272,7 @@ if g:add_tabspace_mappings
     nnoremap <Leader>tt  :tabnew<CR>
     nnoremap <Leader>td  :call TabspaceDelete()<CR>
     nnoremap <Leader>tr  :TabspaceLabel<Space>
-    nnoremap <Leader>tg  :TabspaceGo<Space>
+    nnoremap <Leader>tm  :TabspaceGo<Space>
 endif
 
 if exists("g:initial_tabspaces")
@@ -289,4 +294,6 @@ hi TabspaceCyan      guifg=White  guibg=cyan        ctermfg=White  ctermbg=cyan 
 hi TabspaceMagenta   guifg=White  guibg=magenta     ctermfg=White  ctermbg=magenta   cterm=NONE   gui=NONE
 hi TabspaceBlack     guifg=White  guibg=black       ctermfg=White  ctermbg=black     cterm=NONE   gui=NONE
 hi TabspaceGray      guifg=White  guibg=gray        ctermfg=White  ctermbg=gray      cterm=NONE   gui=NONE
+hi TabspaceDarkgray  guifg=Black  guibg=darkgray    ctermfg=Black  ctermbg=darkgray  cterm=NONE   gui=NONE
+hi TabspaceLightgray guifg=Black  guibg=lightgray   ctermfg=Black  ctermbg=lightgray cterm=NONE   gui=NONE
 hi TabspaceWhite     guifg=Black  guibg=white       ctermfg=Black  ctermbg=white     cterm=NONE   gui=NONE
