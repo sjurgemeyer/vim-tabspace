@@ -98,6 +98,12 @@ function! TabspaceBuffers()
 endfunction
 
 function GetTabHighlight(tab)
+
+    if !has_key(s:tabspaceMapping, a:tab)
+        " This can get called during tab creation before we've had a chance to
+        " populate all of the tab data
+        return g:tabspace_tab_highlight
+    endif
     let tabspaceKey = s:tabspaceMapping[a:tab]
     let selected = a:tab == tabpagenr()
     if (selected)
@@ -162,7 +168,8 @@ endfunction
 function! TabspaceEnter()
     call InitializeTabspace()
     call RefreshTabspaceWorkingDir()
-	call TabspaceBuffers()
+    call TabspaceBuffers()
+    call RefreshTabspaces()
 endfunction
 
 function! TabspaceBufAdd(buf)
@@ -187,8 +194,14 @@ function! InitializeTabspace()
             \ 'inactiveColor' : '',
             \ 'buffers' : []
         \}
+
+        let current = tabpagenr('$')
+        while current > tabpagenr()
+            let s:tabspaceMapping[current] = s:tabspaceMapping[current -1]
+            let current = current - 1
+        endwhile
     endif
-    let s:tabspaceMapping[tabpagenr()] = t:tabspaceKey " TODO, this will only handle the current tab.  Need to cleanup other tabs
+    let s:tabspaceMapping[tabpagenr()] = t:tabspaceKey
 endfunction
 
 function! CreateTabspaces(tabspaceList, use_current)
@@ -273,7 +286,6 @@ function! TabspaceGo(name)
                     let tab = mappingKey
                 endif
             endfor
-            echom tab
             exe 'tabnext ' . tab
             return
         endif
