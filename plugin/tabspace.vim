@@ -220,6 +220,22 @@ function! TabspaceDelete()
 	tabclose
 endfunction
 
+function! TabspaceGo(name)
+	for key in keys(s:tabspaceData)
+		let tabspace = s:tabspaceData[key]
+		if tabspace['label'] == a:name
+			for mappingKey in keys(s:tabspaceMapping)
+				if s:tabspaceMapping[mappingKey] == key
+					let tab = mappingKey
+				endif
+			endfor
+			echom tab
+			exe 'tabnext ' . tab
+			return
+		endif
+	endfor
+endfunction
+
 if g:add_tabspace_nerdtree_mappings
 
     function! TabspaceNerdTreeCWD()
@@ -241,6 +257,7 @@ au TabEnter * :call TabspaceEnter()
 "Commands
 command! -nargs=1 TabspaceLabel call SetTabspaceLabel(<f-args>)
 command! -nargs=1 TabspaceCWD call TabspaceCWD(<f-args>)
+command! -nargs=1 TabspaceGo call TabspaceGo(<f-args>)
 command! -nargs=* TabspaceColor call SetTabspaceColor(<f-args>)
 
 "Shortcuts
@@ -250,6 +267,7 @@ if g:add_tabspace_mappings
     nnoremap <Leader>tt  :tabnew<CR>
     nnoremap <Leader>td  :call TabspaceDelete()<CR>
     nnoremap <Leader>tr  :TabspaceLabel<Space>
+    nnoremap <Leader>tg  :TabspaceGo<Space>
 endif
 
 if exists("g:initial_tabspaces")
