@@ -30,6 +30,9 @@ endif
 if !exists("g:tabspace_excluded_buffer_names")
     let g:tabspace_excluded_buffer_names = ['NERD_Tree']
 endif
+if !exists("g:named_tabspaces")
+    let g:named_tabspaces = {}
+endif
 
 " Map of tab titles
 let s:tabspaceData = {}
@@ -148,8 +151,8 @@ function! RefreshTabspaces()
     set tabline=%!Tabspace()
 endfunction
 
-function! SetTabspaceLabel(name)
-  let s:tabspaceData[t:tabspaceKey]['label'] = a:name
+function! SetTabspaceLabel(label)
+  let s:tabspaceData[t:tabspaceKey]['label'] = a:label
   call RefreshTabspaces()
 endfunction
 
@@ -204,30 +207,50 @@ function! InitializeTabspace()
     let s:tabspaceMapping[tabpagenr()] = t:tabspaceKey
 endfunction
 
+function! OpenTabspaceByName(name)
+    if has_key(s:tabspaceData, a:name)
+        let tab = FindTabIndexForTabspace(a:name)
+        exe 'tabnext ' . tab
+    else
+        if has_key(g:named_tabspaces, a:name)
+            tabnew
+            call CreateTabspace(g:named_tabspaces[a:name], a:name)
+        else
+            echoerr "No tabspace with given name found"
+        endif
+    endif
+endfunction
+
 function! CreateTabspaces(tabspaceList, use_current)
 
     let used_current = !a:use_current
-    for tabspace in a:tabspaceList
+    for tabspaceName in a:tabspaceList
         if used_current == 0
             let used_current = 1
         else
             tabnew
         endif
-        let s:tabspaceIndex = s:tabspaceIndex + 1
-        let t:tabspaceKey = s:tabspaceIndex
-        let cwd = has_key(tabspace, 'cwd') ? tabspace['cwd'] : getcwd()
-        let label = has_key(tabspace, 'label') ? tabspace['label'] : ''
-        let activeColor = has_key(tabspace, 'activeColor') ? tabspace['activeColor'] : ''
-        let inactiveColor = has_key(tabspace, 'inactiveColor') ? tabspace['inactiveColor'] : ''
-        let s:tabspaceData[t:tabspaceKey] = {
-            \ 'cwd' : cwd,
-            \ 'label': label,
-            \ 'activeColor': activeColor,
-            \ 'inactiveColor': inactiveColor,
-            \ 'buffers' : []
-        \}
-        let s:tabspaceMapping[tabpagenr()] = t:tabspaceKey
+        call CreateTabspace(g:named_tabspaces[tabspaceName], tabspaceName)
     endfor
+
+endfunction
+
+function! CreateTabspace(tabspace, name)
+    let t:tabspaceKey = a:name
+    let cwd = has_key(a:tabspace, 'cwd') ? a:tabspace['cwd'] : getcwd()
+    let label = has_key(a:tabspace, 'label') ? a:tabspace['label'] : ''
+    let activeColor = has_key(a:tabspace, 'activeColor') ? a:tabspace['activeColor'] : ''
+    let inactiveColor = has_key(a:tabspace, 'inactiveColor') ? a:tabspace['inactiveColor'] : ''
+    let s:tabspaceData[t:tabspaceKey] = {
+        \ 'cwd' : cwd,
+        \ 'label': label,
+        \ 'activeColor': activeColor,
+        \ 'inactiveColor': inactiveColor,
+        \ 'buffers' : []
+    \}
+    let s:tabspaceMapping[tabpagenr()] = t:tabspaceKey
+    " Since the tab has already been created TabEnter wasn't called
+    exe "cd " . cwd
 endfunction
 
 function! SetTabspaceColor(...)
@@ -277,19 +300,30 @@ function! TabspaceDelete()
     tabclose
 endfunction
 
-function! TabspaceGo(name)
+function! OpenTabspaceByLabel(label)
+    let tab = FindTabspaceByLabel(a:label)
+    if tab != ''
+        exe 'tabnext ' . tab
+    endif
+endfunction
+
+function! FindTabspaceByLabel(label)
     for key in keys(s:tabspaceData)
         let tabspace = s:tabspaceData[key]
-        if tabspace['label'] == a:name
-            for mappingKey in keys(s:tabspaceMapping)
-                if s:tabspaceMapping[mappingKey] == key
-                    let tab = mappingKey
-                endif
-            endfor
-            exe 'tabnext ' . tab
-            return
+        if tabspace['label'] == a:label
+            return FindTabIndexForTabspace(key)
         endif
     endfor
+    return ''
+endfunction
+
+function! FindTabIndexForTabspace(tabspaceKey)
+    for mappingKey in keys(s:tabspaceMapping)
+        if s:tabspaceMapping[mappingKey] == a:tabspaceKey
+            return mappingKey
+        endif
+    endfor
+    return ''
 endfunction
 
 if g:add_tabspace_nerdtree_mappings
@@ -318,7 +352,8 @@ au BufDelete * :call TabspaceBufDelete(expand('<abuf>'))
 "Commands
 command! -nargs=1 TabspaceLabel call SetTabspaceLabel(<f-args>)
 command! -nargs=1 TabspaceCWD call TabspaceCWD(<f-args>)
-command! -nargs=1 TabspaceGo call TabspaceGo(<f-args>)
+command! -nargs=1 OpenTabspaceByLabel call OpenTabspaceByLabel(<f-args>)
+command! -nargs=1 OpenTabspaceByName call OpenTabspaceByName(<f-args>)
 command! -nargs=* TabspaceColor call SetTabspaceColor(<f-args>)
 command! TabspaceBuffers call OpenTabspaceBuffers()
 
@@ -330,7 +365,8 @@ if g:add_tabspace_mappings
     nnoremap <Leader>td  :call TabspaceDelete()<CR>
     nnoremap <Leader>tb  :TabspaceBuffers<CR>
     nnoremap <Leader>tr  :TabspaceLabel<Space>
-    nnoremap <Leader>tm  :TabspaceGo<Space>
+    nnoremap <Leader>tm  :OpenTabspaceByLabel<Space>
+    nnoremap <Leader>tg  :OpenTabspaceByName<Space>
 endif
 
 if exists("g:initial_tabspaces")
