@@ -18,8 +18,8 @@
 
 " Load guard
 if ( exists('g:loaded_ctrlp_tabspace') && g:loaded_ctrlp_tabspace )
-	\ || v:version < 700 || &cp
-	finish
+    \ || v:version < 700 || &cp
+    finish
 endif
 let g:loaded_ctrlp_tabspace = 1
 
@@ -54,17 +54,17 @@ let g:loaded_ctrlp_tabspace = 1
 " + specinput: enable special inputs '..' and '@cd' (disabled by default)
 "
 call add(g:ctrlp_ext_vars, {
-	\ 'init': 'ctrlp#tabspace#init()',
-	\ 'accept': 'ctrlp#tabspace#accept',
-	\ 'lname': 'Tab buffers',
-	\ 'sname': 'tabbufs',
-	\ 'type': 'line',
-	\ 'enter': 'ctrlp#tabspace#enter()',
-	\ 'exit': 'ctrlp#tabspace#exit()',
-	\ 'opts': 'ctrlp#tabspace#opts()',
-	\ 'sort': 0,
-	\ 'specinput': 0,
-	\ })
+    \ 'init': 'ctrlp#tabspace#init()',
+    \ 'accept': 'ctrlp#tabspace#accept',
+    \ 'lname': 'Tab buffers',
+    \ 'sname': 'tabbufs',
+    \ 'type': 'line',
+    \ 'enter': 'ctrlp#tabspace#enter()',
+    \ 'exit': 'ctrlp#tabspace#exit()',
+    \ 'opts': 'ctrlp#tabspace#opts()',
+    \ 'sort': 0,
+    \ 'specinput': 0,
+    \ })
 
 
 " Provide a list of strings to search in
@@ -76,26 +76,35 @@ function! ctrlp#tabspace#init()
     let buflist = g:tabspaceData[t:tabspaceKey]['buffers']
     let bufferList = []
     for buf in buflist
-		echom buf
         let bufname = bufname(buf + 0) " + 0 forces buf to be a number...vimscript
-		echom bufname
         let addBuffer = 1
-		if bufname == ''
-			let addBuffer = 0
-		else
-			for str in g:tabspace_excluded_buffer_names
-				if bufname =~ str
-					let addBuffer = 0
-				endif
-			endfor
-		endif
+        if bufname == ''
+            let addBuffer = 0
+        else
+            for str in g:tabspace_excluded_buffer_names
+                if bufname =~ str
+                    let addBuffer = 0
+                endif
+            endfor
+        endif
         if addBuffer
             call add(bufferList, bufname)
         endif
     endfor
-	return bufferList
+    return bufferList
 endfunction
 
+function TabspaceGetBufferNumber(name)
+    let buflist = g:tabspaceData[t:tabspaceKey]['buffers']
+    let bufferList = []
+    for buf in buflist
+        let bufname = bufname(buf + 0) " + 0 forces buf to be a number...vimscript
+        if bufname == a:name
+            return buf
+        endif
+    endfor
+    return -1
+endfunction
 
 " The action to perform on the selected string
 "
@@ -105,10 +114,29 @@ endfunction
 "  a:str    the selected string
 "
 function! ctrlp#tabspace#accept(mode, str)
-	if (a:mode == 'e')
-		call ctrlp#exit()
-		exe ":e " . a:str
-	endif
+    if (a:mode == 'e')
+        call ctrlp#exit()
+        exe ":e " . a:str
+        return
+    endif
+    if (a:mode == 'h')
+        call ctrlp#exit()
+
+        let bufferNumber = TabspaceGetBufferNumber(a:str)
+
+        let currentBufferNumber = bufnr("$")
+        if currentBufferNumber == bufferNumber
+            let buffers = g:tabspaceData[t:tabspaceKey]['buffers']
+            for buf in buffers
+                if buf != bufferNumber
+                    exe ":buffer " . buf
+                    break
+                endif
+            endfor
+        endif
+        call TabspaceBufDelete(bufferNumber)
+        return
+    endif
 endfunction
 
 
