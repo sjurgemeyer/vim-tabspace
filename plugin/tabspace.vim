@@ -35,7 +35,7 @@ if !exists("g:named_tabspaces")
 endif
 
 " Map of tab titles
-let s:tabspaceData = {}
+let g:tabspaceData = {}
 let s:tabspaceMapping = {}
 let s:tabspaceIndex = 1000
 
@@ -74,32 +74,6 @@ function! Tabspace()
   return tablineText
 endfunction
 
-function! OpenTabspaceBuffers()
-    call TabspaceBuffers()
-    copen
-endfunction
-
-function! TabspaceBuffers()
-    let buflist = s:tabspaceData[t:tabspaceKey]['buffers']
-    let quickfix = []
-    for buf in buflist
-        let bufname = bufname(buf)
-        let addBuffer = 1
-        for str in g:tabspace_excluded_buffer_names
-            if bufname =~ str
-                addBuffer = 0
-            endif
-        endfor
-        if addBuffer
-            call add(quickfix, {
-                \ 'bufnr' : buf,
-                \ 'filename': bufname
-            \ })
-        endif
-    endfor
-    call setqflist(quickfix)
-endfunction
-
 function GetTabHighlight(tab)
 
     if !has_key(s:tabspaceMapping, a:tab)
@@ -110,12 +84,12 @@ function GetTabHighlight(tab)
     let tabspaceKey = s:tabspaceMapping[a:tab]
     let selected = a:tab == tabpagenr()
     if (selected)
-        let highlight = s:tabspaceData[tabspaceKey]['activeColor']
+        let highlight = g:tabspaceData[tabspaceKey]['activeColor']
         if empty(highlight)
             let highlight = g:tabspace_selected_tab_highlight
         endif
     else
-        let highlight = s:tabspaceData[tabspaceKey]['inactiveColor']
+        let highlight = g:tabspaceData[tabspaceKey]['inactiveColor']
         if empty(highlight)
             let highlight = g:tabspace_tab_highlight
         endif
@@ -127,7 +101,7 @@ function GetTabTitle(tab)
     let tabspaceKey = ''
     if has_key(s:tabspaceMapping, a:tab)
         let tabspaceKey = s:tabspaceMapping[a:tab]
-        let label = s:tabspaceData[tabspaceKey]['label']
+        let label = g:tabspaceData[tabspaceKey]['label']
         if !empty(label)
             return label
         endif
@@ -152,17 +126,17 @@ function! RefreshTabspaces()
 endfunction
 
 function! SetTabspaceLabel(label)
-  let s:tabspaceData[t:tabspaceKey]['label'] = a:label
+  let g:tabspaceData[t:tabspaceKey]['label'] = a:label
   call RefreshTabspaces()
 endfunction
 
 function! TabspaceCWD(workingDir)
     exe "cd " . a:workingDir
-    let s:tabspaceData[t:tabspaceKey]['cwd'] = a:workingDir
+    let g:tabspaceData[t:tabspaceKey]['cwd'] = a:workingDir
 endfunction
 
 function! RefreshTabspaceWorkingDir()
-    let tabcwd = s:tabspaceData[t:tabspaceKey]['cwd']
+    let tabcwd = g:tabspaceData[t:tabspaceKey]['cwd']
     if !empty(tabcwd)
         exe "cd " . tabcwd
      endif
@@ -171,18 +145,17 @@ endfunction
 function! TabspaceEnter()
     call InitializeTabspace()
     call RefreshTabspaceWorkingDir()
-    call TabspaceBuffers()
     call RefreshTabspaces()
 endfunction
 
 function! TabspaceBufAdd(buf)
-    call add(s:tabspaceData[t:tabspaceKey]['buffers'], a:buf)
+    call add(g:tabspaceData[t:tabspaceKey]['buffers'], a:buf)
 endfunction
 
 function! TabspaceBufDelete(buf)
-    let idx = index(s:tabspaceData[t:tabspaceKey]['buffers'], a:buf)
+    let idx = index(g:tabspaceData[t:tabspaceKey]['buffers'], a:buf)
     if idx >= 0
-        call remove(s:tabspaceData[t:tabspaceKey]['buffers'], idx)
+        call remove(g:tabspaceData[t:tabspaceKey]['buffers'], idx)
     endif
 endfunction
 
@@ -190,7 +163,7 @@ function! InitializeTabspace()
     if !exists("t:tabspaceKey")
         let s:tabspaceIndex = s:tabspaceIndex + 1
         let t:tabspaceKey = s:tabspaceIndex
-        let s:tabspaceData[t:tabspaceKey] = {
+        let g:tabspaceData[t:tabspaceKey] = {
             \ 'cwd' : getcwd(),
             \ 'label': '',
             \ 'activeColor' : '',
@@ -208,7 +181,7 @@ function! InitializeTabspace()
 endfunction
 
 function! OpenTabspaceByName(name)
-    if has_key(s:tabspaceData, a:name)
+    if has_key(g:tabspaceData, a:name)
         let tab = FindTabIndexForTabspace(a:name)
         exe 'tabnext ' . tab
     else
@@ -241,7 +214,7 @@ function! CreateTabspace(tabspace, name)
     let label = has_key(a:tabspace, 'label') ? a:tabspace['label'] : ''
     let activeColor = has_key(a:tabspace, 'activeColor') ? a:tabspace['activeColor'] : ''
     let inactiveColor = has_key(a:tabspace, 'inactiveColor') ? a:tabspace['inactiveColor'] : ''
-    let s:tabspaceData[t:tabspaceKey] = {
+    let g:tabspaceData[t:tabspaceKey] = {
         \ 'cwd' : cwd,
         \ 'label': label,
         \ 'activeColor': activeColor,
@@ -260,8 +233,8 @@ function! SetTabspaceColor(...)
     if (exists("a:1"))
         let color = ConvertColorToHighlight(a:1)
         if !empty(color)
-            let s:tabspaceData[t:tabspaceKey]['activeColor'] = color
-            let s:tabspaceData[t:tabspaceKey]['inactiveColor'] = color
+            let g:tabspaceData[t:tabspaceKey]['activeColor'] = color
+            let g:tabspaceData[t:tabspaceKey]['inactiveColor'] = color
         else
             echom "Invalid color " . a:1 . ' "' . color . '"'
         endif
@@ -269,7 +242,7 @@ function! SetTabspaceColor(...)
     if (exists("a:2"))
         let color = ConvertColorToHighlight(a:2)
         if !empty(color)
-            let s:tabspaceData[t:tabspaceKey]['activeColor'] = color
+            let g:tabspaceData[t:tabspaceKey]['activeColor'] = color
         else
             echom "Invalid color " . a:2
         endif
@@ -295,7 +268,7 @@ function! TabspaceDelete()
         let current = current + 1
     endwhile
     unlet s:tabspaceMapping[current]
-    unlet s:tabspaceData[tabspaceKey]
+    unlet g:tabspaceData[tabspaceKey]
 
     tabclose
 endfunction
@@ -308,8 +281,8 @@ function! OpenTabspaceByLabel(label)
 endfunction
 
 function! FindTabspaceByLabel(label)
-    for key in keys(s:tabspaceData)
-        let tabspace = s:tabspaceData[key]
+    for key in keys(g:tabspaceData)
+        let tabspace = g:tabspaceData[key]
         if tabspace['label'] == a:label
             return FindTabIndexForTabspace(key)
         endif
@@ -355,7 +328,6 @@ command! -nargs=1 TabspaceCWD call TabspaceCWD(<f-args>)
 command! -nargs=1 OpenTabspaceByLabel call OpenTabspaceByLabel(<f-args>)
 command! -nargs=1 OpenTabspaceByName call OpenTabspaceByName(<f-args>)
 command! -nargs=* TabspaceColor call SetTabspaceColor(<f-args>)
-command! TabspaceBuffers call OpenTabspaceBuffers()
 
 "Shortcuts
 if g:add_tabspace_mappings
@@ -363,7 +335,6 @@ if g:add_tabspace_mappings
     nnoremap <Leader>tk  :tabprev<CR>
     nnoremap <Leader>tt  :tabnew<CR>
     nnoremap <Leader>td  :call TabspaceDelete()<CR>
-    nnoremap <Leader>tb  :TabspaceBuffers<CR>
     nnoremap <Leader>tr  :TabspaceLabel<Space>
     nnoremap <Leader>tm  :OpenTabspaceByLabel<Space>
     nnoremap <Leader>tg  :OpenTabspaceByName<Space>

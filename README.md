@@ -10,7 +10,7 @@ This plugin aims to make tabs into more functional workspaces. As of now, the pl
 * Change the current working directory on a per tab basis, only when requested.
 * Allows creating pre-configured, named tabs to be opened when the editor starts, or ad hoc by specifying the name
 * Allows giving tabs custom labels and colors, either configured ahead of time or ad-hoc
-* Show buffer lists specific to the current tab
+* Integrates with CTRL-P to display open buffers per tab
 * Integrates with NERDTree to change the working dir
 
 
