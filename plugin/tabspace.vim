@@ -149,6 +149,9 @@ function! TabspaceEnter()
 endfunction
 
 function! TabspaceBufAdd(buf)
+	if has_key(g:tabspaceData, t:tabspaceKey)
+		let g:tabspaceData[t:tabspaceKey]['buffers'] = filter(g:tabspaceData[t:tabspaceKey]['buffers'], 'v:val != a:buf')
+	endif
     call add(g:tabspaceData[t:tabspaceKey]['buffers'], a:buf)
 endfunction
 
@@ -320,6 +323,7 @@ endif
 " This is where the magic happens
 au TabEnter * :call TabspaceEnter()
 au BufAdd * :call TabspaceBufAdd(expand('<abuf>'))
+au BufEnter * :call TabspaceBufAdd(expand('<abuf>'))
 au BufDelete * :call TabspaceBufDelete(expand('<abuf>'))
 
 "Commands

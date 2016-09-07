@@ -73,7 +73,7 @@ call add(g:ctrlp_ext_vars, {
 "
 function! ctrlp#tabspace#init()
 
-    let buflist = g:tabspaceData[t:tabspaceKey]['buffers']
+    let buflist = reverse(copy(g:tabspaceData[t:tabspaceKey]['buffers']))
     let bufferList = []
     for buf in buflist
         let bufname = bufname(buf + 0) " + 0 forces buf to be a number...vimscript
