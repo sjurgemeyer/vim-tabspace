@@ -17,11 +17,11 @@
 "         \ ]
 
 " Load guard
-if ( exists('g:loaded_ctrlp_tabspace') && g:loaded_ctrlp_tabspace )
+if ( exists('g:loaded_ctrlp_namedtabspaces') && g:loaded_ctrlp_namedtabspaces )
     \ || v:version < 700 || &cp
     finish
 endif
-let g:loaded_ctrlp_tabspace = 1
+let g:loaded_ctrlp_namedtabspaces = 1
 
 
 " Add this extension's settings to g:ctrlp_ext_vars
@@ -54,14 +54,14 @@ let g:loaded_ctrlp_tabspace = 1
 " + specinput: enable special inputs '..' and '@cd' (disabled by default)
 "
 call add(g:ctrlp_ext_vars, {
-    \ 'init': 'ctrlp#tabspace#init()',
-    \ 'accept': 'ctrlp#tabspace#accept',
-    \ 'lname': 'Tab buffers',
-    \ 'sname': 'tabbufs',
+    \ 'init': 'ctrlp#namedtabspaces#init()',
+    \ 'accept': 'ctrlp#namedtabspaces#accept',
+    \ 'lname': 'Tab spaces',
+    \ 'sname': 'presets',
     \ 'type': 'line',
-    \ 'enter': 'ctrlp#tabspace#enter()',
-    \ 'exit': 'ctrlp#tabspace#exit()',
-    \ 'opts': 'ctrlp#tabspace#opts()',
+    \ 'enter': 'ctrlp#namedtabspaces#enter()',
+    \ 'exit': 'ctrlp#namedtabspaces#exit()',
+    \ 'opts': 'ctrlp#namedtabspaces#opts()',
     \ 'sort': 0,
     \ 'specinput': 0,
     \ })
@@ -71,27 +71,8 @@ call add(g:ctrlp_ext_vars, {
 "
 " Return: a Vim's List
 "
-function! ctrlp#tabspace#init()
-
-    let buflist = reverse(copy(g:tabspaceData[t:tabspaceKey]['buffers']))
-    let bufferList = []
-    for buf in buflist
-        let bufname = bufname(buf + 0) " + 0 forces buf to be a number...vimscript
-        let addBuffer = 1
-        if bufname == ''
-            let addBuffer = 0
-        else
-            for str in g:tabspace_excluded_buffer_names
-                if bufname =~ str
-                    let addBuffer = 0
-                endif
-            endfor
-        endif
-        if addBuffer
-            call add(bufferList, bufname)
-        endif
-    endfor
-    return bufferList
+function! ctrlp#namedtabspaces#init()
+    return keys(g:named_tabspaces)
 endfunction
 
 function TabspaceGetBufferNumber(name)
@@ -113,50 +94,32 @@ endfunction
 "           the values are 'e', 'v', 't' and 'h', respectively
 "  a:str    the selected string
 "
-function! ctrlp#tabspace#accept(mode, str)
+function! ctrlp#namedtabspaces#accept(mode, str)
     if (a:mode == 'e')
         call ctrlp#exit()
-        exe ":e " . a:str
-        return
-    endif
-    if (a:mode == 'h')
-        call ctrlp#exit()
-
-        let bufferNumber = TabspaceGetBufferNumber(a:str)
-
-        let currentBufferNumber = bufnr("$")
-        if currentBufferNumber == bufferNumber
-            let buffers = g:tabspaceData[t:tabspaceKey]['buffers']
-            for buf in buffers
-                if buf != bufferNumber
-                    exe ":buffer " . buf
-                    break
-                endif
-            endfor
-        endif
-        call TabspaceBufDelete(bufferNumber)
+        exe ":OpenTabspaceByName " . a:str
         return
     endif
 endfunction
 
 
 " (optional) Do something before enterting ctrlp
-function! ctrlp#tabspace#enter()
+function! ctrlp#namedtabspaces#enter()
 endfunction
 
 
 " (optional) Do something after exiting ctrlp
-function! ctrlp#tabspace#exit()
+function! ctrlp#namedtabspaces#exit()
 endfunction
 
 
 " (optional) Set or check for user options specific to this extension
-function! ctrlp#tabspace#opts()
+function! ctrlp#namedtabspaces#opts()
 endfunction
 
 " Give the extension an ID
 let s:id = g:ctrlp_builtins + len(g:ctrlp_ext_vars)
 " Allow it to be called later
-function! ctrlp#tabspace#id()
+function! ctrlp#namedtabspaces#id()
   return s:id
 endfunction
