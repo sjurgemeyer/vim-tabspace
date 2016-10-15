@@ -108,7 +108,7 @@ function! ctrlp#tabbuffers#accept(mode, str)
         return
     endif
     if (a:mode == 'h')
-        call ctrlp#exit()
+        "call ctrlp#exit()
 
         let bufferNumber = TabspaceGetBufferNumber(a:str)
 
@@ -127,6 +127,17 @@ function! ctrlp#tabbuffers#accept(mode, str)
     endif
 endfunction
 
+function! TabspaceGetBufferNumber(name)
+    let buflist = g:tabspaceData[t:tabspaceKey]['buffers']
+    let bufferList = []
+    for buf in buflist
+        let bufname = bufname(buf + 0) " + 0 forces buf to be a number...vimscript
+        if bufname == a:name
+            return buf
+        endif
+    endfor
+    return -1
+endfunction
 
 " (optional) Do something before enterting ctrlp
 function! ctrlp#tabbuffers#enter()
