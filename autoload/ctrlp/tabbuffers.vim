@@ -123,6 +123,8 @@ function! ctrlp#tabbuffers#accept(mode, str)
             endfor
         endif
         call TabspaceBufDelete(bufferNumber)
+
+        call ctrlp#setlines() " Refresh list
         return
     endif
 endfunction
