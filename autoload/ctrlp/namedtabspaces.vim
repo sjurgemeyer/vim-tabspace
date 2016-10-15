@@ -56,7 +56,7 @@ let g:loaded_ctrlp_namedtabspaces = 1
 call add(g:ctrlp_ext_vars, {
     \ 'init': 'ctrlp#namedtabspaces#init()',
     \ 'accept': 'ctrlp#namedtabspaces#accept',
-    \ 'lname': 'Tab spaces',
+    \ 'lname': 'Named Tabspaces',
     \ 'sname': 'presets',
     \ 'type': 'line',
     \ 'enter': 'ctrlp#namedtabspaces#enter()',
@@ -75,17 +75,6 @@ function! ctrlp#namedtabspaces#init()
     return keys(g:named_tabspaces)
 endfunction
 
-function TabspaceGetBufferNumber(name)
-    let buflist = g:tabspaceData[t:tabspaceKey]['buffers']
-    let bufferList = []
-    for buf in buflist
-        let bufname = bufname(buf + 0) " + 0 forces buf to be a number...vimscript
-        if bufname == a:name
-            return buf
-        endif
-    endfor
-    return -1
-endfunction
 
 " The action to perform on the selected string
 "
