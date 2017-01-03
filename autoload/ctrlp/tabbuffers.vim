@@ -78,16 +78,16 @@ function! ctrlp#tabbuffers#init()
     for buf in buflist
         let bufname = bufname(buf + 0) " + 0 forces buf to be a number...vimscript
         let addBuffer = 1
-        if bufname == ''
-            let addBuffer = 0
-        else
-            for str in g:tabspace_excluded_buffer_names
-                if bufname =~ str
-                    let addBuffer = 0
-                endif
-            endfor
-        endif
+        for str in g:tabspace_excluded_buffer_names
+            if bufname =~ str
+                let addBuffer = 0
+            endif
+        endfor
+
         if addBuffer
+            if (bufname == '')
+                let bufname = "<No Name>" . buf
+            endif
             call add(bufferList, bufname)
         endif
     endfor
@@ -104,7 +104,11 @@ endfunction
 function! ctrlp#tabbuffers#accept(mode, str)
     if (a:mode == 'e')
         call ctrlp#exit()
-        exe ":e " . a:str
+        if a:str =~ "\<No Name\>"
+            exe ":buffer " . strpart(a:str, 9)
+        else
+            exe ":e " . a:str
+        endif
         return
     endif
     if (a:mode == 'h')
